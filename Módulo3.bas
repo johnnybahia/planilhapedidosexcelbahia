@@ -41,6 +41,15 @@ Sub GerarRelatorio()
     Dim partes() As String
     Dim valorExtraido As String
     Dim nomeCliente As String
+    Dim dictCodigosDilly As Object
+    Dim dictPendentesDilly As Object
+    Dim descricaoOriginalDilly As String
+    Dim descricaoChaveDilly As String
+    Dim tamanhoDilly As String
+
+    ' Cadastro perene de códigos Dilly (Módulo8) - carregado uma única vez
+    Set dictCodigosDilly = CarregarDictCodigosDilly()
+    Set dictPendentesDilly = CreateObject("Scripting.Dictionary")
 
     ' Loop pelas linhas copiadas no Relatório
     For r = 4 To last_row
@@ -61,13 +70,22 @@ Sub GerarRelatorio()
             End If
             
         ' --- REGRA CLIENTE: DILLY ---
+        ' O XML da Dilly deixou de trazer "OC:" na observação (Coluna J).
+        ' A coluna D passa a ser deduzida do cadastro perene (Módulo8),
+        ' usando a DESCRIÇÃO (Coluna F) como chave e o TAMANHO (Coluna G)
+        ' como sufixo.
         ElseIf InStr(nomeCliente, "DILLY") > 0 Then
-            If InStr(1, textoOC, "OC", vbTextCompare) > 0 Then
-                partes = Split(UCase(textoOC), "OC")
-                valorExtraido = Trim(partes(0))
-                
-                relatorio_ws.Cells(r, 4).NumberFormat = "@"
-                relatorio_ws.Cells(r, 4).Value = valorExtraido
+            descricaoOriginalDilly = Trim(CStr(relatorio_ws.Cells(r, 6).Value))
+            descricaoChaveDilly = NormalizarDescricao(descricaoOriginalDilly)
+
+            If descricaoChaveDilly <> "" Then
+                If dictCodigosDilly.Exists(descricaoChaveDilly) Then
+                    tamanhoDilly = ExtrairTamanhoSemUnidade(relatorio_ws.Cells(r, 7).Value)
+                    relatorio_ws.Cells(r, 4).NumberFormat = "@"
+                    relatorio_ws.Cells(r, 4).Value = dictCodigosDilly(descricaoChaveDilly) & "-" & tamanhoDilly
+                ElseIf Not dictPendentesDilly.Exists(descricaoChaveDilly) Then
+                    dictPendentesDilly.Add descricaoChaveDilly, descricaoOriginalDilly
+                End If
             End If
             
         ' --- REGRA CLIENTES: DAKOTA E ANIGER ---
@@ -90,6 +108,12 @@ Sub GerarRelatorio()
             End If
         End If
     Next r
+
+    ' Resolve (via InputBox, uma vez por descrição nova) as linhas DILLY
+    ' cuja descrição ainda não tinha código base cadastrado.
+    If dictPendentesDilly.Count > 0 Then
+        Call ResolverPendenciasDilly(relatorio_ws, last_row, dictCodigosDilly, dictPendentesDilly)
+    End If
     ' ======================================================================
     ' --- FIM DO TRATAMENTO DE CLIENTES ---
     ' ======================================================================
