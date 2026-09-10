@@ -1,4 +1,4 @@
-Attribute VB_Name = "Módulo7"
+Attribute VB_Name = "Mï¿½dulo7"
 Option Explicit
 
 Private Const WEBAPP_URL       As String = "https://script.google.com/macros/s/AKfycbyZ7d8AKxlJq0F3J1ne-GtX4hBTx8NKIHrfXe5KsrKU9FTPKac-9lNSjyZ3RAqZvPzJwA/exec"
@@ -8,12 +8,14 @@ Private Const COL_FIM          As Long = 24
 Private Const LIN_FIM          As Long = 5000
 Private Const LINHAS_POR_BLOCO As Long = 500
 Private Const MIN_LINHAS       As Long = 2
+Private Const MAX_TENT_BLOCO   As Long = 3
+Private Const ESPERA_TENT_SEG  As Long = 5
 
 Public Sub EnviarRelatorio()
     Dim ws As Worksheet, arr As Variant
     Dim ultLin As Long, r As Long, c As Long
     Dim totalBlocos As Long, bloco As Long, linIni As Long, linFimB As Long
-    Dim sid As String, resp As String
+    Dim sid As String, resp As String, payload As String, tentativaBloco As Long
 
     On Error GoTo Falha
     Set ws = LocalizarAba(ABA_ORIGEM)
@@ -42,11 +44,22 @@ Public Sub EnviarRelatorio()
         linIni = (bloco - 1) * LINHAS_POR_BLOCO + 1
         linFimB = linIni + LINHAS_POR_BLOCO - 1
         If linFimB > ultLin Then linFimB = ultLin
-        Application.StatusBar = "Enviando bloco " & bloco & " de " & totalBlocos & "..."
-        resp = PostarComRetentativa(MontarPayload(arr, sid, bloco, totalBlocos, ultLin, linIni, linFimB))
-        If InStr(1, resp, """ok"":true", vbTextCompare) = 0 Then
-            Err.Raise vbObjectError + 3, , "Falha no bloco " & bloco & " de " & totalBlocos & ": " & resp
-        End If
+        payload = MontarPayload(arr, sid, bloco, totalBlocos, ultLin, linIni, linFimB)
+
+        For tentativaBloco = 1 To MAX_TENT_BLOCO
+            Application.StatusBar = "Enviando bloco " & bloco & " de " & totalBlocos & _
+                IIf(tentativaBloco > 1, " (tentativa " & tentativaBloco & ")", "") & "..."
+            resp = PostarComRetentativa(payload)
+            If InStr(1, resp, """ok"":true", vbTextCompare) > 0 Then Exit For
+            If Not EhFalhaTransitoria(resp) Then
+                Err.Raise vbObjectError + 3, , "Falha no bloco " & bloco & " de " & totalBlocos & ": " & resp
+            End If
+            If tentativaBloco = MAX_TENT_BLOCO Then
+                Err.Raise vbObjectError + 3, , "Falha no bloco " & bloco & " de " & totalBlocos & _
+                    " apos " & MAX_TENT_BLOCO & " tentativas: " & resp
+            End If
+            Application.Wait Now + TimeSerial(0, 0, ESPERA_TENT_SEG)
+        Next tentativaBloco
     Next bloco
 
     Application.StatusBar = False
@@ -134,13 +147,21 @@ Private Function Utf8Bytes(ByVal s As String) As Variant
     st.Close
 End Function
 
+Private Function EhFalhaTransitoria(ByVal resp As String) As Boolean
+    ' Timeout reportado pelo Apps Script ao acessar a planilha, ou erro de
+    ' rede/HTTP jah esgotado pelo PostarComRetentativa: vale tentar de novo.
+    EhFalhaTransitoria = (InStr(1, resp, "tempo limite", vbTextCompare) > 0) _
+                       Or (Left$(resp, 5) = "Erro ") _
+                       Or (Left$(resp, 5) = "HTTP ")
+End Function
+
 Private Function PostarComRetentativa(ByVal payload As String) As String
     Dim tent As Long, http As Object
     For tent = 1 To 3
         On Error Resume Next
         Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
         http.Option(6) = True
-        http.SetTimeouts 30000, 30000, 60000, 300000
+        http.SetTimeouts 30000, 30000, 60000, 360000
         http.Open "POST", WEBAPP_URL, False
         http.SetRequestHeader "Content-Type", "application/json;charset=UTF-8"
         http.Send Utf8Bytes(payload)
@@ -173,7 +194,7 @@ End Function
 
 Private Function Normalizar(ByVal s As String) As String
     Dim de As String, pa As String, i As Long
-    de = "áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ"
+    de = "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
     pa = "aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC"
     For i = 1 To Len(de)
         s = Replace(s, Mid$(de, i, 1), Mid$(pa, i, 1))
