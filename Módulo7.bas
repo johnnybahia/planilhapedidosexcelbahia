@@ -152,7 +152,8 @@ Private Function EhFalhaTransitoria(ByVal resp As String) As Boolean
     ' rede/HTTP jah esgotado pelo PostarComRetentativa: vale tentar de novo.
     EhFalhaTransitoria = (InStr(1, resp, "tempo limite", vbTextCompare) > 0) _
                        Or (Left$(resp, 5) = "Erro ") _
-                       Or (Left$(resp, 5) = "HTTP ")
+                       Or (Left$(resp, 5) = "HTTP ") _
+                       Or (Left$(Trim$(resp), 1) <> "{")
 End Function
 
 Private Function PostarComRetentativa(ByVal payload As String) As String
