@@ -157,29 +157,26 @@ Private Function EhFalhaTransitoria(ByVal resp As String) As Boolean
 End Function
 
 Private Function PostarComRetentativa(ByVal payload As String) As String
-    Dim tent As Long, http As Object
-    For tent = 1 To 3
-        On Error Resume Next
-        Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
-        http.Option(6) = True
-        http.SetTimeouts 30000, 30000, 60000, 360000
-        http.Open "POST", WEBAPP_URL, False
-        http.SetRequestHeader "Content-Type", "application/json;charset=UTF-8"
-        http.Send Utf8Bytes(payload)
-        If Err.Number = 0 And http.Status = 200 Then
-            PostarComRetentativa = http.ResponseText
-            On Error GoTo 0
-            Exit Function
-        End If
-        If Err.Number <> 0 Then
-            PostarComRetentativa = "Erro " & Err.Number & ": " & Err.Description
-        Else
-            PostarComRetentativa = "HTTP " & http.Status
-        End If
-        Err.Clear
-        On Error GoTo 0
-        Application.Wait Now + TimeValue("0:00:03")
-    Next tent
+    ' Uma unica tentativa aqui: a retentativa (com espera de
+    ' ESPERA_TENT_SEG entre elas) ja e feita pelo chamador, por bloco.
+    ' Duplicar a retentativa aqui so multiplicava requisicoes contra o
+    ' Google em cima de um cenario de rate-limit/instabilidade.
+    Dim http As Object
+    On Error Resume Next
+    Set http = CreateObject("WinHttp.WinHttpRequest.5.1")
+    http.Option(6) = True
+    http.SetTimeouts 30000, 30000, 60000, 360000
+    http.Open "POST", WEBAPP_URL, False
+    http.SetRequestHeader "Content-Type", "application/json;charset=UTF-8"
+    http.Send Utf8Bytes(payload)
+    If Err.Number = 0 And http.Status = 200 Then
+        PostarComRetentativa = http.ResponseText
+    ElseIf Err.Number <> 0 Then
+        PostarComRetentativa = "Erro " & Err.Number & ": " & Err.Description
+    Else
+        PostarComRetentativa = "HTTP " & http.Status
+    End If
+    On Error GoTo 0
 End Function
 
 Private Function LocalizarAba(ByVal nome As String) As Worksheet
