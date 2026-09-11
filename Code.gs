@@ -55,7 +55,11 @@ function doPost(e) {
     const valores = _comRetentativa(function () {
       return stg.getRange(1, 1, total, COLUNAS).getValues();
     });
-    if (valores.length !== total) return _json({ ok: false, erro: 'contagem divergente' });
+    if (valores.length !== total) {
+      _comRetentativa(function () { ss.deleteSheet(stg); });
+      props.deleteProperty('sessaoAtiva');
+      return _json({ ok: false, erro: 'contagem divergente' });
+    }
 
     const dest = ss.getSheetByName(ABA_DESTINO);
     if (!dest) return _json({ ok: false, erro: 'aba destino inexistente' });
