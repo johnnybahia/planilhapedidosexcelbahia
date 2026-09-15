@@ -1,7 +1,7 @@
 Attribute VB_Name = "M�dulo7"
 Option Explicit
 
-Private Const WEBAPP_URL       As String = "https://script.google.com/macros/s/AKfycbyZ7d8AKxlJq0F3J1ne-GtX4hBTx8NKIHrfXe5KsrKU9FTPKac-9lNSjyZ3RAqZvPzJwA/exec"
+Private Const WEBAPP_URL       As String = "https://script.google.com/macros/s/AKfycbxLmPvyBTXC5VK67Uo6Hi9ubiaBRiBUaC595q0elIALW7LVaz-kJ2Fk88GAuyu7_ypj-Q/exec"
 Private Const TOKEN            As String = "mrf_rel_9K7xQp2Zv4Ld8Tn3"
 Private Const ABA_ORIGEM       As String = "RELATORIO"
 Private Const COL_FIM          As Long = 24
