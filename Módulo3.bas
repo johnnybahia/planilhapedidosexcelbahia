@@ -15,8 +15,8 @@ Sub GerarRelatorio()
     Set xml_ws = ThisWorkbook.Sheets("XML")
     Set relatorio_ws = ThisWorkbook.Sheets("RELATORIO")
     
-    copy_columns = Array("O", "P", "A", "E", "B", "C", "D", "F", "I", "R", "K", "L", "M", "N", "S", "T")
-    paste_columns = Array("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "X")
+    copy_columns = Array("O", "P", "A", "E", "B", "C", "D", "F", "I", "K", "L", "M", "N", "S", "T")
+    paste_columns = Array("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O")
     
     ' Define o valor inicial de last_row
     last_row = 4
@@ -54,7 +54,7 @@ Sub GerarRelatorio()
     Next i
 
     ' --- FORMATA��O GERAL E BORDAS ---
-    With relatorio_ws.Range("A4:X" & last_row)
+    With relatorio_ws.Range("A4:O" & last_row)
         .HorizontalAlignment = xlCenter
         .Borders.LineStyle = xlContinuous
         .Borders.Weight = xlThin
@@ -62,7 +62,7 @@ Sub GerarRelatorio()
 
     ' Adiciona o filtro na linha 3
     If relatorio_ws.AutoFilterMode Then relatorio_ws.AutoFilterMode = False
-    relatorio_ws.Range("A3:X" & last_row).AutoFilter
+    relatorio_ws.Range("A3:O" & last_row).AutoFilter
 
     ' Atualiza a vari�vel de controle de estado
     limpado = False
@@ -119,8 +119,9 @@ Sub GerarRelatorio()
         ' Pega o nome do cliente na Coluna B (2) e remove espa�os extras
         nomeCliente = UCase(Trim(relatorio_ws.Cells(r, 2).Value))
 
-        ' Pega o texto da Coluna J (10)
-        textoOC = relatorio_ws.Cells(r, 10).Value
+        ' Busca a informacao da OC diretamente na aba XML (Coluna R), ja que
+        ' essa coluna nao e mais colada no relatorio
+        textoOC = xml_ws.Cells(r, "R").Value
 
         ' --- REGRA CLIENTE: DASS ---
         If InStr(nomeCliente, "DASS") > 0 Then

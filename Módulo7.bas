@@ -4,7 +4,7 @@ Option Explicit
 Private Const WEBAPP_URL       As String = "https://script.google.com/macros/s/AKfycbxLmPvyBTXC5VK67Uo6Hi9ubiaBRiBUaC595q0elIALW7LVaz-kJ2Fk88GAuyu7_ypj-Q/exec"
 Private Const TOKEN            As String = "mrf_rel_9K7xQp2Zv4Ld8Tn3"
 Private Const ABA_ORIGEM       As String = "RELATORIO"
-Private Const COL_FIM          As Long = 24
+Private Const COL_FIM          As Long = 15
 Private Const LIN_FIM          As Long = 5000
 Private Const LINHAS_POR_BLOCO As Long = 500
 Private Const MIN_LINHAS       As Long = 2

@@ -1,7 +1,7 @@
 const TOKEN          = 'mrf_rel_9K7xQp2Zv4Ld8Tn3';
 const ABA_DESTINO    = 'PEDIDO ATUALIZADO';
 const ABA_STAGING    = '_STAGING';
-const COLUNAS        = 23;
+const COLUNAS        = 15;
 const COLUNAS_TEXTO  = [];   // ex.: [1, 5] força formato texto (zeros à esquerda)
 const MAX_TENTATIVAS = 3;
 const ESPERA_MS       = 2000;
