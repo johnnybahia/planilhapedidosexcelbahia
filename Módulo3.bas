@@ -40,9 +40,9 @@ Sub GerarRelatorio()
     ' Loop para formatar (N�mero, Fonte e Alinhamento)
     For i = LBound(paste_columns) To UBound(paste_columns)
         With relatorio_ws.Range(paste_columns(i) & "4:" & paste_columns(i) & last_row)
-            ' Converte texto para n�mero (exceto colunas D, E, L e M que s�o datas)
+            ' Converte texto para n�mero (exceto colunas D, E, K e L que s�o datas)
             If paste_columns(i) <> "D" And paste_columns(i) <> "E" And _
-               paste_columns(i) <> "L" And paste_columns(i) <> "M" Then
+               paste_columns(i) <> "K" And paste_columns(i) <> "L" Then
                 .NumberFormat = "General"
                 .Value = .Value
             End If
@@ -83,12 +83,27 @@ Sub GerarRelatorio()
     Call AplicarTextToColumns(relatorio_ws.Columns("H:H"))
     Call AplicarTextToColumns(relatorio_ws.Columns("I:I"))
     Call AplicarTextToColumns(relatorio_ws.Columns("J:J"))
-    Call AplicarTextToColumns(relatorio_ws.Columns("K:K"))
-    
-    ' Colunas L e M s�o datas j� em formato brasileiro - apenas garante exibi��o correta
+
+    ' Colunas K e L chegam como texto "DD/MM/YYYY" da origem. Conversao manual
+    ' (sem TextToColumns/CDate) para nao depender da configuracao regional do
+    ' Windows/Excel, que poderia reinterpretar como MM/DD/YYYY.
+    Dim rDataFix As Long, dataTexto As String, partesData() As String
+    For rDataFix = 4 To last_row
+        dataTexto = Trim(relatorio_ws.Cells(rDataFix, "K").Value)
+        If dataTexto <> "" And InStr(dataTexto, "/") > 0 Then
+            partesData = Split(dataTexto, "/")
+            relatorio_ws.Cells(rDataFix, "K").Value = DateSerial(CInt(partesData(2)), CInt(partesData(1)), CInt(partesData(0)))
+        End If
+
+        dataTexto = Trim(relatorio_ws.Cells(rDataFix, "L").Value)
+        If dataTexto <> "" And InStr(dataTexto, "/") > 0 Then
+            partesData = Split(dataTexto, "/")
+            relatorio_ws.Cells(rDataFix, "L").Value = DateSerial(CInt(partesData(2)), CInt(partesData(1)), CInt(partesData(0)))
+        End If
+    Next rDataFix
+    relatorio_ws.Range("K4:K" & last_row).NumberFormat = "DD/MM/YYYY"
     relatorio_ws.Range("L4:L" & last_row).NumberFormat = "DD/MM/YYYY"
-    relatorio_ws.Range("M4:M" & last_row).NumberFormat = "DD/MM/YYYY"
-    
+
     Call AplicarTextToColumns(relatorio_ws.Columns("N:N"))
 
     Application.ScreenUpdating = True
