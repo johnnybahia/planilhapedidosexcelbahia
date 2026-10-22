@@ -124,6 +124,9 @@ Sub GerarRelatorio()
     Dim descricaoOriginalDilly As String
     Dim descricaoChaveDilly As String
     Dim tamanhoDilly As String
+    Dim posOC As Long
+    Dim partesOC() As String
+    Dim textoNovo As String
 
     ' Cadastro perene de c�digos Dilly (M�dulo8) - carregado uma �nica vez
     Set dictCodigosDilly = CarregarDictCodigosDilly()
@@ -140,10 +143,18 @@ Sub GerarRelatorio()
 
         ' --- REGRA CLIENTE: DASS ---
         If InStr(nomeCliente, "DASS") > 0 Then
-            If InStr(textoOC, "-") > 0 Then
+            valorExtraido = ""
+            posOC = InStr(1, textoOC, "OC:", vbTextCompare)
+            If posOC > 0 Then
+                ' Formato: "... OC: <oc> - <codigo> [- <texto novo>]"
+                partesOC = Split(Mid(textoOC, posOC + 3), "-")
+                If UBound(partesOC) >= 1 Then valorExtraido = Trim(partesOC(1))
+            ElseIf InStr(textoOC, "-") > 0 Then
                 partes = Split(textoOC, "-")
                 valorExtraido = Trim(partes(UBound(partes)))
+            End If
 
+            If valorExtraido <> "" Then
                 relatorio_ws.Cells(r, 4).NumberFormat = "@"
                 relatorio_ws.Cells(r, 4).Value = valorExtraido
             End If
@@ -193,6 +204,17 @@ Sub GerarRelatorio()
     If dictPendentesDilly.Count > 0 Then
         Call ResolverPendenciasDilly(relatorio_ws, last_row, dictCodigosDilly, dictPendentesDilly)
     End If
+
+    ' Texto complementar da Coluna R (apos o 2o "-" depois do "OC") e
+    ' acrescentado a DESCRICAO (Coluna F) de todos os clientes. Roda depois
+    ' do tratamento acima porque a Coluna F e a chave do cadastro Dilly.
+    For r = 4 To last_row
+        textoNovo = ExtrairTextoNovoOC(xml_ws.Cells(r, "R").Value)
+        If textoNovo <> "" Then
+            relatorio_ws.Cells(r, 6).NumberFormat = "@"
+            relatorio_ws.Cells(r, 6).Value = Trim(CStr(relatorio_ws.Cells(r, 6).Value)) & " " & textoNovo
+        End If
+    Next r
     ' ======================================================================
     ' --- FIM DO TRATAMENTO DE CLIENTES ---
     ' ======================================================================
@@ -211,3 +233,35 @@ Sub AplicarTextToColumns(rng As Range)
         Semicolon:=False, Comma:=True, Space:=False, Other:=False, FieldInfo:=Array(1, 1), TrailingMinusNumbers:=True
 End Sub
 
+' Retorna o texto que vem apos o 2o "-" depois do marcador "OC" na Coluna R
+' (ex.: "XXX OC: 16300379 - 1456031 - PONT UMBRO PRETO" -> "PONT UMBRO PRETO").
+' Os "-" antes do "OC" (ex.: "...315024-A OC: ...") sao ignorados.
+Private Function ExtrairTextoNovoOC(ByVal valorR As Variant) As String
+    Dim texto As String
+    Dim pos As Long
+    Dim partes() As String
+    Dim i As Long
+    Dim resultado As String
+
+    If IsError(valorR) Or IsNull(valorR) Then Exit Function
+    texto = CStr(valorR)
+
+    pos = InStr(1, texto, "OC:", vbTextCompare)
+    If pos > 0 Then
+        pos = pos + 3
+    Else
+        pos = InStr(1, texto, "OC", vbTextCompare)
+        If pos = 0 Then Exit Function
+        pos = pos + 2
+    End If
+
+    partes = Split(Mid(texto, pos), "-")
+    If UBound(partes) < 2 Then Exit Function
+
+    resultado = partes(2)
+    For i = 3 To UBound(partes)
+        resultado = resultado & "-" & partes(i)
+    Next i
+
+    ExtrairTextoNovoOC = Trim(resultado)
+End Function

@@ -110,6 +110,7 @@ Public Sub SincronizarCodigosDilly()
     Dim partes() As String, baseExtraido As String
     Dim novos As Long, conflitos As String
     Dim msg As String
+    Dim descricaoXml As String
 
     On Error GoTo Falha
     Set relatorio_ws = ThisWorkbook.Sheets("RELATORIO")
@@ -129,6 +130,12 @@ Public Sub SincronizarCodigosDilly()
         If InStr(nomeCliente, "DILLY") > 0 Then
             codCliente = Trim(CStr(relatorio_ws.Cells(r, 4).Value))
             descricaoOriginal = Trim(CStr(relatorio_ws.Cells(r, 6).Value))
+            ' A coluna F pode ter recebido texto complementar da coluna R do XML
+            ' (Modulo3); a chave do cadastro e a descricao original (XML coluna C).
+            descricaoXml = Trim(CStr(ThisWorkbook.Sheets("XML").Cells(r, 3).Value))
+            If descricaoXml <> "" And Left(descricaoOriginal, Len(descricaoXml)) = descricaoXml Then
+                descricaoOriginal = descricaoXml
+            End If
             descricaoChave = NormalizarDescricao(descricaoOriginal)
 
             If codCliente <> "" And descricaoChave <> "" And InStr(codCliente, "-") > 0 Then
