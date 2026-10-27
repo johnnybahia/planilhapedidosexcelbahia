@@ -219,6 +219,11 @@ Sub GerarRelatorio()
     ' --- FIM DO TRATAMENTO DE CLIENTES ---
     ' ======================================================================
 
+    ' Cadastro de ponta personalizada (Modulo9): detecta itens-gatilho na
+    ' Coluna F, pede o cadastro dos codigos novos e acrescenta a descricao ao
+    ' fim da Coluna F. Roda por ultimo porque a Coluna F ja foi alterada acima.
+    Call ProcessarPontaPersonalizada(relatorio_ws, last_row)
+
     ' Seleciona A4 no final
     relatorio_ws.Range("A4").Select
 
